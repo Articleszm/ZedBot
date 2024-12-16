@@ -1,0 +1,39 @@
+import pywikibot
+import re
+
+# Define the site
+site = pywikibot.Site("en", "wikipedia")
+site.login()
+
+def clean_page(page):
+    """Cleans up the page by fixing whitespace and unnecessary tags."""
+    original_text = page.text
+
+    # Basic clean-up examples
+    clean_text = re.sub(r'\n{3,}', '\n\n', original_text)  # Remove extra line breaks
+    clean_text = re.sub(r'<!--.*?-->', '', clean_text, flags=re.DOTALL)  # Remove HTML comments
+    clean_text = re.sub(r'\s+$', '', clean_text, flags=re.MULTILINE)  # Remove trailing spaces
+
+    # Example: remove cleanup tags (adjust as necessary)
+    clean_text = re.sub(r'\{\{cleanup.*?\}\}', '', clean_text, flags=re.IGNORECASE)
+
+    if clean_text != original_text:
+        page.text = clean_text
+        page.save(summary="Automated clean-up: removed unnecessary whitespace, comments, and cleanup tags", minor=True)
+        print(f"Cleaned page: {page.title()}")
+    else:
+        print(f"No changes needed for: {page.title()}")
+
+def main():
+    """Main function to process pages with 'cleanup' templates."""
+    category = pywikibot.Category(site, "Category:All articles needing cleanup")
+    
+    for page in category.articles():
+        print(f"Processing page: {page.title()}")
+        try:
+            clean_page(page)
+        except Exception as e:
+            print(f"Error processing {page.title()}: {e}")
+
+if __name__ == "__main__":
+    main()
